@@ -1,4 +1,4 @@
-package com.leave_backend.leave.exception.dto;
+package com.leave_backend.leave.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
@@ -14,8 +14,10 @@ import java.util.Map;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Response {
-    private Map<String, Object> status;
-    private List<Object> data;
-    private List<Map<String, String>> errors;
+public class ResponseDTO<T> {
+    private String status;
+    private String message;
+    private T data;
+    private T errors;
 }
+

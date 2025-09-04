@@ -1,34 +1,16 @@
 package com.leave_backend.leave.services;
 
 import com.leave_backend.leave.RowMapper.EmployeeRowMapper;
-import com.leave_backend.leave.dto.employee.EmployeeDTO;
-import com.leave_backend.leave.exception.custom.EmployeeAlreadyExistException;
-import com.leave_backend.leave.exception.custom.EmployeeNotFoundException;
-import com.leave_backend.leave.exception.custom.InvalidFieldDataException;
-import com.leave_backend.leave.exception.dto.Response;
+import com.leave_backend.leave.dto.ResponseDTO;
 import com.leave_backend.leave.models.Employee;
-import com.leave_backend.leave.models.Gender;
-import com.leave_backend.leave.models.Position;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataAccessException;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.DuplicateKeyException;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.ResponseEntity;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -38,29 +20,24 @@ public class EmployeeService {
     private final EmployeeRowMapper employeeRowMapper;
     private final PositionService positionService;
 
-    public ResponseEntity<Response> getAllEmployee() {
+    public ResponseEntity<ResponseDTO> getAllEmployee() {
         String sql = """
                 SELECT employee_id, employee_firstname, employee_lastname, employee_gender, employee_email, employee_phone, report_to, position_id
                 FROM employees
                 """;
         List<Employee> queryResult = namedParameterJdbcTemplate.query(sql, employeeRowMapper);
-        Map<String, Object> status = new HashMap<>();
         if (queryResult.isEmpty()) {
-            status.put("code", "success");
-            status.put("message", "Employees is empty");
-            Response response = Response.builder()
-                    .status(status)
-                    .build();
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(ResponseDTO.builder()
+                    .status("success")
+                    .message("Employees is empty")
+                    .build());
         } else {
             List<Object> employees = new ArrayList<>(queryResult);
-            status.put("code", "success");
-            status.put("message", "Retrieve all employee successfully");
-            Response response = Response.builder()
-                    .status(status)
+            return ResponseEntity.ok(ResponseDTO.builder()
+                    .status("success")
+                    .message("Retrieve all employee successfully")
                     .data(employees)
-                    .build();
-            return ResponseEntity.ok(response);
+                    .build());
         }
     }
 

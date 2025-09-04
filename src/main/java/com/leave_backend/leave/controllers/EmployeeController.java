@@ -1,7 +1,7 @@
 package com.leave_backend.leave.controllers;
 
+import com.leave_backend.leave.dto.ResponseDTO;
 import com.leave_backend.leave.dto.employee.EmployeeDTO;
-import com.leave_backend.leave.exception.dto.Response;
 import com.leave_backend.leave.models.Employee;
 import com.leave_backend.leave.models.Position;
 import com.leave_backend.leave.services.EmployeeService;
@@ -20,7 +20,7 @@ public class EmployeeController {
     private final EmployeeService employeeService;
 
     @GetMapping
-    public ResponseEntity<Response> getAll() {
+    public ResponseEntity<ResponseDTO> getAll() {
         return employeeService.getAllEmployee();
     }
 
