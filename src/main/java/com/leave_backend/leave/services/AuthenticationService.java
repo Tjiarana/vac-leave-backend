@@ -38,10 +38,15 @@ public class AuthenticationService {
             );
             UserDetails user = (UserDetails) auth.getPrincipal();
             String token = jwtUtil.generateToken(user.getUsername(), user.getAuthorities());
+            Date expiration = jwtUtil.getExpirationDateFromToken(token);
             return ResponseEntity.ok(ResponseDTO.builder()
                     .status("success")
                     .message("Login Successfully")
-                    .data(Map.of("token", token))
+                    .data(Map.of("token", token, "roles", user.getAuthorities().stream()
+                            .map(GrantedAuthority::getAuthority)
+                            .distinct()
+                            .toList(),
+                            "expiration", expiration))
                     .build());
         } catch (BadCredentialsException ex) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(

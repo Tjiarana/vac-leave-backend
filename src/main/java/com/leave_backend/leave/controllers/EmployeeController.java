@@ -1,18 +1,13 @@
 package com.leave_backend.leave.controllers;
 
 import com.leave_backend.leave.dto.ResponseDTO;
-import com.leave_backend.leave.dto.employee.EmployeeDTO;
-import com.leave_backend.leave.models.Employee;
-import com.leave_backend.leave.models.Position;
 import com.leave_backend.leave.services.EmployeeService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
-import java.util.List;
-
+@PreAuthorize("hasAuthority('ROLE_MANAGER')")
 @RequiredArgsConstructor
 @RequestMapping("/api/employee")
 @RestController

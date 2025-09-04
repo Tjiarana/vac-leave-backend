@@ -46,16 +46,22 @@ public class JwtUtil {
 
     public String generateToken(String username, Collection<? extends GrantedAuthority> roles) {
         final Map<String, Object> claims = new HashMap<>();
-        claims.put("roles", roles);
+        claims.put("roles", roles.stream()
+                .map(GrantedAuthority::getAuthority)
+                .distinct()
+                .toList());
         return doGenerateToken(claims, username);
     }
 
     private String doGenerateToken(Map<String, Object> claims, String subject) {
+        Date now = new Date();
+        Date validity = new Date(now.getTime() + expiration * 1000);
+
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + expiration * 1000))
+                .setIssuedAt(now)
+                .setExpiration(validity)
                 .signWith(SignatureAlgorithm.HS256, secret)
                 .compact();
     }

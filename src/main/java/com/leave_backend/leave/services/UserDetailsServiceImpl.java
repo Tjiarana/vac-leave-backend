@@ -47,7 +47,12 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             boolean enabled = rs.getBoolean("employee_enabled");
             String roleName = rs.getString("role_name");
 
-            var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + roleName));
+            List<GrantedAuthority> authorities = "MANAGER".equalsIgnoreCase(roleName)
+                    ? List.of(
+                    new SimpleGrantedAuthority("ROLE_MANAGER"),
+                    new SimpleGrantedAuthority("ROLE_EMPLOYEE")
+            )
+                    : List.of(new SimpleGrantedAuthority("ROLE_EMPLOYEE"));;
 
             return new org.springframework.security.core.userdetails.User(
                     String.valueOf(empId),
