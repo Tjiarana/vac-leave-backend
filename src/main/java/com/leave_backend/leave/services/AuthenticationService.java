@@ -1,10 +1,8 @@
 package com.leave_backend.leave.services;
 
 import com.leave_backend.leave.dto.ResponseDTO;
-import com.leave_backend.leave.models.LoginRequest;
-import com.leave_backend.leave.models.User;
+import com.leave_backend.leave.models.LoginRequestModel;
 import com.leave_backend.leave.utils.JwtUtil;
-import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -15,9 +13,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -31,7 +27,7 @@ public class AuthenticationService {
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private final UserDetailsServiceImpl userDetailsService;
 
-    public ResponseEntity<ResponseDTO> login(LoginRequest request) {
+    public ResponseEntity<ResponseDTO> login(LoginRequestModel request) {
         try {
             Authentication auth = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(String.valueOf(request.getEmployeeId()), request.getPassword())

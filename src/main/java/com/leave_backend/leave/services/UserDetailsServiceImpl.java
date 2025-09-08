@@ -23,11 +23,16 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     private static final String sqlFindAuth = """
-            SELECT u.user_id, u.employee_id, u.user_password, u.employee_enabled, r.role_name
+            SELECT u.user_id, u.employee_id, u.user_password, u.employee_enabled
             FROM users u
-            JOIN roles r ON u.role_id = r.role_id
             WHERE u.employee_id = :employee_id
             LIMIT 1 
+            """;
+    private static final String sqlFindRole = """
+            SELECT r.role_name
+            FROM roles r
+            JOIN user_roles ur ON r.role_id = ur.role_id
+            WHERE ur.user_id = :user_id
             """;
 
     @Override
@@ -41,18 +46,13 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 throw new UsernameNotFoundException("Employee not found");
             }
 
-//            int userId = rs.getInt("user_id");
+            int userId = rs.getInt("user_id");
             int empId = rs.getInt("employee_id");
             String pwdHash = rs.getString("user_password");
             boolean enabled = rs.getBoolean("employee_enabled");
-            String roleName = rs.getString("role_name");
+            List<String> roles = findRolesByUserId(userId);
 
-            List<GrantedAuthority> authorities = "MANAGER".equalsIgnoreCase(roleName)
-                    ? List.of(
-                    new SimpleGrantedAuthority("ROLE_MANAGER"),
-                    new SimpleGrantedAuthority("ROLE_EMPLOYEE")
-            )
-                    : List.of(new SimpleGrantedAuthority("ROLE_EMPLOYEE"));;
+            List<SimpleGrantedAuthority> authorities = roles.stream().map(r -> new SimpleGrantedAuthority("ROLE_" + r)).toList();
 
             return new org.springframework.security.core.userdetails.User(
                     String.valueOf(empId),
@@ -62,5 +62,11 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                     authorities
             );
         });
+    }
+
+    public List<String> findRolesByUserId(int userId) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("user_id", userId);
+        return namedParameterJdbcTemplate.query(sqlFindRole, params, (rs, i) -> rs.getString("role_name"));
     }
 }

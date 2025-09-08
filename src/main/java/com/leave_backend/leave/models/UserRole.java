@@ -5,11 +5,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Builder
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class Position {
-    private int id;
-    private String positionName;
+public class UserRole {
+    private int roleId;
+    private int userId;
 }

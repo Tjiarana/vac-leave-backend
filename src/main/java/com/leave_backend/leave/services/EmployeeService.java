@@ -1,15 +1,22 @@
 package com.leave_backend.leave.services;
 
-import com.leave_backend.leave.RowMapper.EmployeeRowMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.leave_backend.leave.db.InsertData;
+import com.leave_backend.leave.db.QueryData;
 import com.leave_backend.leave.dto.ResponseDTO;
 import com.leave_backend.leave.models.Employee;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 @Slf4j
@@ -17,96 +24,94 @@ import java.util.List;
 @Service
 public class EmployeeService {
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
-    private final EmployeeRowMapper employeeRowMapper;
-    private final PositionService positionService;
+    private final QueryData queryData;
+    private final InsertData insertData;
+    private final ObjectMapper mapper = JsonMapper.builder().build();
 
-    public ResponseEntity<ResponseDTO> getAllEmployee() {
-        String sql = """
-                SELECT employee_id, employee_firstname, employee_lastname, employee_gender, employee_email, employee_phone, report_to, position_id
-                FROM employees
-                """;
-        List<Employee> queryResult = namedParameterJdbcTemplate.query(sql, employeeRowMapper);
+    public ResponseEntity<Object> getAllEmployee() {
+        List<Employee> queryResult = queryData.queryAllEmployee();
         if (queryResult.isEmpty()) {
             return ResponseEntity.ok(ResponseDTO.builder()
                     .status("success")
-                    .message("Employees is empty")
+                    .message("Employees are empty")
                     .build());
         } else {
-            List<Object> employees = new ArrayList<>(queryResult);
             return ResponseEntity.ok(ResponseDTO.builder()
                     .status("success")
                     .message("Retrieve all employee successfully")
-                    .data(employees)
+                    .data(queryResult)
                     .build());
         }
     }
 
-//    public Employee getEmployeeById(Long id) {
-//        String sql = """
-//                SELECT employee_id, employee_firstname, employee_lastname, employee_gender, employee_email, employee_phone, report_to, position_id
-//                FROM employees
-//                WHERE employee_id = :employee_id
-//                """;
-//        Map<String, Object> params = new HashMap<>();
-//        params.put("employee_id", id);
-//        return namedParameterJdbcTemplate.queryForObject(sql, params, employeeRowMapper);
-//    }
-//
-//    public EmployeeDTO getEmployeeDTOById(Long id) {
-//        final String sql = """
-//                SELECT e.employee_id, e.employee_firstname, e.employee_lastname, e.employee_gender, e.employee_email, e.employee_phone,e.report_to, e.position_id,
-//                m.employee_id as manager_id, m.employee_firstname as manager_firstname, m.employee_lastname as manager_lastname, m.position_id as manager_position_id
-//                FROM employees e
-//                LEFT JOIN employees m ON e.report_to = m.employee_id
-//                WHERE e.employee_id = :employee_id
-//                """;
-//        Map<String, Object> params = new HashMap<>();
-//        params.put("employee_id", id);
-//
-//        return namedParameterJdbcTemplate.queryForObject(sql, params, (rs, rowNum) -> {
-//            int positionId = rs.getInt("position_id");
-//            Position position = positionService.getById(positionId);
-//
-//            Long managerId = rs.getObject("manager_id", Long.class);
-//            EmployeeDTO manager = null;
-//            if (managerId != null) {
-//                int managerPositionId = rs.getInt("manager_position_id");
-//                Position managerPosition = positionService.getById(managerPositionId);
-//
-//                manager = EmployeeDTO.builder()
-//                        .id(managerId)
-//                        .name(rs.getString("manager_firstname") + " " + rs.getString("manager_lastname"))
-//                        .position(managerPosition.getPositionName())
-//                        .reportTo(null)
-//                        .build();
-//            }
-//
-//            return EmployeeDTO.builder()
-//                    .id(rs.getLong("employee_id"))
-//                    .name(rs.getString("employee_firstname") + " " + rs.getString("employee_lastname"))
-//                    .position(position.getPositionName())
-//                    .reportTo(manager)
-//                    .build();
-//        });
-//    }
-//
-//    @Transactional
-//    public int addEmployee(Employee employee) {
-//        String sql = """
-//                INSERT INTO employees (employee_id, employee_firstname, employee_lastname, employee_gender, employee_email, employee_phone, report_to, position_id)
-//                VALUES (:employee_id, :employee_firstname, :employee_lastname, :employee_gender, :employee_email, :employee_phone, :report_to, :position_id)
-//                """;
-//        Map<String, Object> params = new HashMap<>();
-//        params.put("employee_id", employee.getId());
-//        params.put("employee_firstname", employee.getEmployeeFirstname());
-//        params.put("employee_lastname", employee.getEmployeeLastname());
-//        params.put("employee_gender", employee.getEmployeeGender().name());
-//        params.put("employee_email", employee.getEmployeeEmail());
-//        params.put("employee_phone", employee.getEmployeePhone());
-//        params.put("report_to", employee.getReportTo());
-//        params.put("position_id", employee.getPositionId());
-//        try {
-//            return namedParameterJdbcTemplate.update(sql, params);
-//        }
-//    }
+    public ResponseEntity<Object> getEmployeeById(Long id) {
+        Employee queryResult = queryData.queryEmployee(id);
+        if (queryResult == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseDTO.builder()
+                    .status("error")
+                    .message("Employees not found with id: " + id)
+                    .build());
+        } else {
+            return ResponseEntity.ok(ResponseDTO.builder()
+                    .status("success")
+                    .message("Retrieve employee id: " + id + " successfully")
+                    .data(queryResult)
+                    .build());
+        }
+    }
+
+    public ResponseEntity<Object> getEmployeeDTOById(Long id) {
+        ObjectNode queryResult = queryData.queryEmployeeDTO(id);
+        if (queryResult == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseDTO.builder()
+                    .status("error")
+                    .message("Employees not found with id: " + id)
+                    .build());
+        }
+        if (queryResult.hasNonNull("reportTo")) {
+            JsonNode managerId = queryResult.get("reportTo");
+            Employee reportToQueryResult = queryData.queryEmployee(managerId.asLong());
+            ObjectNode managerNode = mapper.createObjectNode();
+            managerNode.put("name", reportToQueryResult.getEmployeeFirstname() + " " + reportToQueryResult.getEmployeeLastname());
+            managerNode.put("position", queryData.queryPosition(reportToQueryResult.getPositionId()));
+            queryResult.set("reportTo", managerNode);
+        } else {
+            queryResult.remove("reportTo");
+        }
+
+        JsonNode positionId = queryResult.get("positionId");
+        String positionName = queryData.queryPosition(positionId.asInt());
+        queryResult.remove("positionId");
+        queryResult.put("position", positionName);
+        return ResponseEntity.ok(ResponseDTO.builder()
+                .status("success")
+                .message("Retrieve employee id: " + id + " successfully")
+                .data(queryResult)
+                .build());
+    }
+
+    @Transactional
+    public ResponseEntity<Object> insertEmployee(Employee employee) {
+        HashMap<String, Object> employeeInfo = new HashMap<>();
+        employeeInfo.put("employee_id", employee.getId());
+        employeeInfo.put("employee_firstname", employee.getEmployeeFirstname());
+        employeeInfo.put("employee_lastname", employee.getEmployeeLastname());
+        employeeInfo.put("employee_gender", employee.getEmployeeGender().toString());
+        employeeInfo.put("employee_email", employee.getEmployeeEmail());
+        employeeInfo.put("employee_phone", employee.getEmployeePhone());
+        employeeInfo.put("report_to", employee.getReportTo());
+        employeeInfo.put("position_id", employee.getPositionId());
+        int insertResult = insertData.insertEmployee(employeeInfo);
+        if (insertResult == 1) {
+            return ResponseEntity.ok(ResponseDTO.builder()
+                    .status("success")
+                    .message("Insert employee successfully")
+                    .build());
+        } else {
+            return ResponseEntity.ok(ResponseDTO.builder()
+                    .status("error")
+                    .message("Cannot insert employee")
+                    .build());
+        }
+    }
 }

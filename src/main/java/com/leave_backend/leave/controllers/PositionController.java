@@ -17,16 +17,16 @@ import java.util.List;
 public class PositionController {
     private final PositionService positionService;
 
-    @GetMapping
-    public ResponseEntity<List<Position>> getAll() {
-        List<Position> positions = positionService.getAll();
-        return ResponseEntity.ok(positions);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Position> getById(@PathVariable int id) {
-        Position position = positionService.getById(id);
-        return ResponseEntity.ok(position);
-    }
+//    @GetMapping
+//    public ResponseEntity<List<Position>> getAll() {
+//        List<Position> positions = positionService.getAll();
+//        return ResponseEntity.ok(positions);
+//    }
+//
+//    @GetMapping("/{id}")
+//    public ResponseEntity<Object> getById(@PathVariable int id) {
+//        Position position = positionService.getById(id);
+//        return ResponseEntity.ok(position);
+//    }
 
 }

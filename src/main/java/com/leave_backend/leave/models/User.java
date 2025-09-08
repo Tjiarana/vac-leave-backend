@@ -8,6 +8,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @AllArgsConstructor
@@ -18,9 +20,7 @@ public class User {
     private String userPassword;
     private Boolean userEnabled;
     @Positive
-    @NotNull(message = "Role id is required")
-    private int roleId;
-    @Positive
     @NotNull(message = "Employee id is required")
     private int employeeId;
+    private List<String> roles;
 }

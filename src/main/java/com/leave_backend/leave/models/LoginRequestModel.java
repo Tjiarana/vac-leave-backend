@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
 @Data
-public class LoginRequest {
+public class LoginRequestModel {
     @NotNull(message = "Employee ID is required")
     @Positive(message = "Employee ID must be positive")
     private int employeeId;
