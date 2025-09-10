@@ -13,8 +13,11 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.stereotype.Component;
 
+import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -25,24 +28,23 @@ public class QueryData {
 
     public List<Employee> queryAllEmployee() {
         String sql = """
-                SELECT employee_id, employee_firstname, employee_lastname, employee_gender, employee_email, employee_phone, report_to, position_id
-                FROM employees
+                SELECT * FROM employees
                 """;
         return namedParameterJdbcTemplate.query(sql, (rs, rowNum) -> {
             Employee employee = new Employee();
-            employee.setId(rs.getLong("employee_id"));
+            employee.setId(rs.getString("employee_id"));
             employee.setEmployeeFirstname(rs.getString("employee_firstname"));
             employee.setEmployeeLastname(rs.getString("employee_lastname"));
             employee.setEmployeeGender(Gender.valueOf(rs.getString("employee_gender")));
             employee.setEmployeeEmail(rs.getString("employee_email"));
             employee.setEmployeePhone(rs.getString("employee_phone"));
-            employee.setReportTo(rs.getObject("report_to", Long.class));
-            employee.setPositionId(rs.getInt("position_id"));
+            employee.setReportTo(rs.getString("report_to"));
+            employee.setPositionId(rs.getString("position_id"));
             return employee;
         });
     }
 
-    public Employee queryEmployee(Long id) {
+    public Employee queryEmployee(String id) {
         String sql = """
                 SELECT employee_id, employee_firstname, employee_lastname, employee_gender, employee_email, employee_phone, report_to, position_id
                 FROM employees
@@ -53,14 +55,14 @@ public class QueryData {
         return namedParameterJdbcTemplate.query(sql, parameters, rs -> {
             if (rs.next()) {
                 Employee employee = new Employee();
-                employee.setId(rs.getLong("employee_id"));
+                employee.setId(rs.getString("employee_id"));
                 employee.setEmployeeFirstname(rs.getString("employee_firstname"));
                 employee.setEmployeeLastname(rs.getString("employee_lastname"));
                 employee.setEmployeeGender(Gender.valueOf(rs.getString("employee_gender")));
                 employee.setEmployeeEmail(rs.getString("employee_email"));
                 employee.setEmployeePhone(rs.getString("employee_phone"));
-                employee.setReportTo(rs.getObject("report_to", Long.class));
-                employee.setPositionId(rs.getInt("position_id"));
+                employee.setReportTo(rs.getString("report_to"));
+                employee.setPositionId(rs.getString("position_id"));
                 return employee;
             } else {
                 return null;
@@ -68,7 +70,7 @@ public class QueryData {
         });
     }
 
-    public ObjectNode queryEmployeeDTO(Long id) {
+    public ObjectNode queryEmployeeDTO(String id) {
         String sql = """
                 SELECT employee_id, employee_firstname, employee_lastname, report_to, position_id
                 FROM employees
@@ -81,15 +83,71 @@ public class QueryData {
                 return mapper.createObjectNode()
                         .put("employeeId", rs.getLong("employee_id"))
                         .put("employeeName", rs.getString("employee_firstname") + " " + rs.getString("employee_lastname"))
-                        .put("reportTo", rs.getObject("report_to", Long.class))
-                        .put("positionId", rs.getInt("position_id"));
+                        .put("reportTo", rs.getString("report_to"))
+                        .put("positionId", rs.getString("position_id"));
             } else {
                 return null;
             }
         });
     }
 
-    public String queryPosition(int id) {
+    public Boolean queryExistingEmployee(String employeeId) {
+        String sql = """
+                SELECT 1 FROM employees
+                WHERE employee_id = :employee_id
+                """;
+        MapSqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("employee_id", employeeId);
+        return Boolean.TRUE.equals(namedParameterJdbcTemplate.query(sql, parameters, ResultSet::next));
+    }
+
+    public Map<String, List<String>> queryExistingEmployeeField(String employeeEmail, String employeePhone) {
+        String sql = """
+                SELECT employee_email, employee_phone FROM employees
+                WHERE (employee_email = :employee_email OR employee_phone = :employee_phone)
+                """;
+        MapSqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("employee_email", employeeEmail)
+                .addValue("employee_phone", employeePhone);
+        return namedParameterJdbcTemplate.query(sql, parameters, rs -> {
+            List<String> emails = new ArrayList<>();
+            List<String> phones = new ArrayList<>();
+            Map<String, List<String>> queryResult = new HashMap<>();
+            while (rs.next()) {
+                emails.add(rs.getString("employee_email"));
+                phones.add(rs.getString("employee_phone"));
+            }
+            queryResult.put("emails", emails);
+            queryResult.put("phones", phones);
+            return queryResult;
+        });
+    }
+
+    public Map<String, List<String>> queryExistingOtherEmployeeField(String id, String employeeEmail, String employeePhone) {
+        String sql = """
+                SELECT employee_email, employee_phone FROM employees
+                WHERE (employee_email = :employee_email OR employee_phone = :employee_phone)
+                AND employee_id != :employee_id
+                """;
+        MapSqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("employee_id", id)
+                .addValue("employee_email", employeeEmail)
+                .addValue("employee_phone", employeePhone);
+        return namedParameterJdbcTemplate.query(sql, parameters, rs -> {
+            List<String> emails = new ArrayList<>();
+            List<String> phones = new ArrayList<>();
+            Map<String, List<String>> queryResult = new HashMap<>();
+            while (rs.next()) {
+                emails.add(rs.getString("employee_email"));
+                phones.add(rs.getString("employee_phone"));
+            }
+            queryResult.put("emails", emails);
+            queryResult.put("phones", phones);
+            return queryResult;
+        });
+    }
+
+    public String queryPosition(String id) {
         String sql = """
                 SELECT position_name
                 FROM positions
@@ -106,31 +164,34 @@ public class QueryData {
         });
     }
 
-    public List<Long> queryRolesIdByRolesName(List<String> rolesName) {
+    public Boolean queryExistingPosition(String positionId) {
+        String sql = """
+                SELECT 1 FROM positions
+                WHERE position_id = :position_id
+                """;
+        MapSqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("position_id", positionId);
+        return Boolean.TRUE.equals(namedParameterJdbcTemplate.query(sql, parameters, ResultSet::next));
+    }
+
+    public List<String> queryRolesIdByRolesName(List<String> rolesName) {
         String sql = """
                 SELECT role_id
                 FROM roles
-                WHERE role_name = :role_name;
+                WHERE role_name IN (:roles);
                 """;
-        List<Long> rolesId = new ArrayList<>();
-        for (String roleName : rolesName) {
-            SqlParameterSource parameters = new MapSqlParameterSource()
-                    .addValue("role_name", roleName);
-            Long roleId = namedParameterJdbcTemplate.query(sql, parameters, rs -> {
-                if (rs.next()) {
-                    return rs.getObject("role_id", Long.class);
-                } else {
-                    return null;
-                }
-            });
-            if (roleId != null) {
-                rolesId.add(roleId);
+        SqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("roles", rolesName);
+        return namedParameterJdbcTemplate.query(sql, parameters, rs -> {
+            List<String> rolesId = new ArrayList<>();
+            while (rs.next()) {
+                rolesId.add(rs.getString("role_id"));
             }
-        }
-        return rolesId;
+            return rolesId;
+        });
     }
 
-    public int queryUserIdByEmployeeId(Long employeeId) {
+    public String queryUserIdByEmployeeId(String employeeId) {
         String sql = """
                 SELECT user_id
                 FROM users
@@ -139,7 +200,7 @@ public class QueryData {
         MapSqlParameterSource parameters = new MapSqlParameterSource().addValue("employee_id", employeeId);
         return namedParameterJdbcTemplate.query(sql, parameters, rs -> {
             if (rs.next()) {
-                return rs.getInt("user_id");
+                return rs.getString("user_id");
             } else {
                 return null;
             }

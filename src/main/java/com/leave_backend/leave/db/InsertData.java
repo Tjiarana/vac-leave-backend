@@ -44,13 +44,13 @@ public class InsertData {
         return affectedRow;
     }
 
-    public int insertUserRoles(int userId, List<Long> rolesId) {
+    public int insertUserRoles(String userId, List<String> rolesId) {
         String sql = """
             INSERT INTO user_roles (user_id, role_id)
             VALUES (:user_id, :role_id)
         """;
         int affectedRow = 0;
-        for (Long roleId : rolesId) {
+        for (String roleId : rolesId) {
             MapSqlParameterSource parameters = new MapSqlParameterSource()
                     .addValue("user_id", userId)
                     .addValue("role_id", roleId);

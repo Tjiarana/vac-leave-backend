@@ -26,7 +26,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             SELECT u.user_id, u.employee_id, u.user_password, u.employee_enabled
             FROM users u
             WHERE u.employee_id = :employee_id
-            LIMIT 1 
+            LIMIT 1
             """;
     private static final String sqlFindRole = """
             SELECT r.role_name
@@ -37,17 +37,16 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) {
-        Long employeeId = Long.valueOf(username);
         Map<String, Object> params = new HashMap<>();
-        params.put("employee_id", employeeId);
+        params.put("employee_id", username);
 
         return namedParameterJdbcTemplate.query(sqlFindAuth, params, rs -> {
             if (!rs.next()) {
                 throw new UsernameNotFoundException("Employee not found");
             }
 
-            int userId = rs.getInt("user_id");
-            int empId = rs.getInt("employee_id");
+            String userId = rs.getString("user_id");
+            String empId = rs.getString("employee_id");
             String pwdHash = rs.getString("user_password");
             boolean enabled = rs.getBoolean("employee_enabled");
             List<String> roles = findRolesByUserId(userId);
@@ -64,7 +63,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         });
     }
 
-    public List<String> findRolesByUserId(int userId) {
+    public List<String> findRolesByUserId(String userId) {
         Map<String, Object> params = new HashMap<>();
         params.put("user_id", userId);
         return namedParameterJdbcTemplate.query(sqlFindRole, params, (rs, i) -> rs.getString("role_name"));

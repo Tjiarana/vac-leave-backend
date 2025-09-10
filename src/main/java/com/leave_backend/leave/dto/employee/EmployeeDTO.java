@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class EmployeeDTO {
-    private Long id;
+    private String id;
     private String name;
     private EmployeeDTO reportTo;
     private String position;

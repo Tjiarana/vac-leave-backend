@@ -25,14 +25,14 @@ public class PositionService {
     public List<Position> getAll() {
         String sql = "SELECT position_id, position_name FROM positions";
         return namedParameterJdbcTemplate.query(sql, (rs, rowNum) -> {
-            return new Position(rs.getInt("position_id"), rs.getString("position_name"));
+            return new Position(rs.getString("position_id"), rs.getString("position_name"));
         });
     }
 
-    public String getPositionById(int id) {
+    public String getPositionById(String id) {
         final String sql = """
                 SELECT position_name
-                FROM positions 
+                FROM positions
                 WHERE position_id = :position_id
                 """;
         MapSqlParameterSource parameters = new MapSqlParameterSource().addValue("position_id", id);

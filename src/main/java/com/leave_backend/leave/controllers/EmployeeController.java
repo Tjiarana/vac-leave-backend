@@ -21,12 +21,19 @@ public class EmployeeController {
 
     @GetMapping(value = "/{id}",
             produces = {MediaType.APPLICATION_JSON_VALUE})
-    public ResponseEntity<Object> getEmployeeDTOById(@PathVariable Long id) {
+    public ResponseEntity<Object> getEmployeeDTOById(@PathVariable String id) {
         return employeeService.getEmployeeDTOById(id);
     }
 
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<Object> addEmployee(@Valid @RequestBody Employee employee) {
         return employeeService.insertEmployee(employee);
+    }
+
+    @PutMapping(value = "/{id}",
+            consumes = {MediaType.APPLICATION_JSON_VALUE},
+            produces = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<Object> updateEmployee(@Valid @RequestBody Employee employee) {
+        return employeeService.updateEmployee(employee);
     }
 }

@@ -12,8 +12,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Employee {
     @Positive
-    @NotNull(message = "Employee id is required")
-    private Long id;
+    @NotBlank(message = "Employee id is required")
+    private String id;
 
     @NotBlank(message = "Firstname is required")
     @Size(max = 20, message = "Firstname must not exceed 20 characters")
@@ -35,10 +35,8 @@ public class Employee {
     @NotNull(message = "Email is required")
     private String employeePhone;
 
-    @Positive
-    private Long reportTo;
+    private String reportTo;
 
-    @NotNull(message = "Position ID is required")
-    @Positive(message = "Position ID must be positive")
-    private int positionId;
+    @NotBlank(message = "Position ID is required")
+    private String positionId;
 }
