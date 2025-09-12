@@ -1,6 +1,5 @@
 package com.leave_backend.leave.controllers;
 
-import com.leave_backend.leave.dto.ResponseDTO;
 import com.leave_backend.leave.models.LoginRequestModel;
 import com.leave_backend.leave.services.AuthenticationService;
 import jakarta.validation.Valid;
@@ -18,7 +17,7 @@ public class AuthenticationController {
     private final AuthenticationService authenticationService;
 
     @PostMapping("/login")
-    public ResponseEntity<ResponseDTO> login(@Valid @RequestBody LoginRequestModel request) {
+    public ResponseEntity<Object> login(@Valid @RequestBody LoginRequestModel request) {
         return authenticationService.login(request);
     }
 }

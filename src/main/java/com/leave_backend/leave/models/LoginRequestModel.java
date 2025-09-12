@@ -7,7 +7,7 @@ import lombok.Data;
 
 @Data
 public class LoginRequestModel {
-    @NotNull(message = "Employee ID is required")
+    @NotNull(message = "Employee id is required")
     private String employeeId;
     @NotBlank(message = "Password is required")
     private String password;
