@@ -42,7 +42,7 @@ public class AuthenticationService {
                             .map(GrantedAuthority::getAuthority)
                             .distinct()
                             .toList(),
-                            "expiration", expiration))
+                            "token_expiration", expiration))
                     .build());
         } catch (BadCredentialsException ex) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
