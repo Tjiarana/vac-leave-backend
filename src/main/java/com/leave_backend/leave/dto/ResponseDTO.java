@@ -16,6 +16,7 @@ import java.util.Map;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ResponseDTO<T> {
     private String status;
+    private String code;
     private String message;
     private T data;
     private T errors;

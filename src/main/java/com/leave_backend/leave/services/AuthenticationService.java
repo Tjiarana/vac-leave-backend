@@ -31,7 +31,8 @@ public class AuthenticationService {
             if (queryData.queryUserIdByEmployeeId(request.getEmployeeId()) == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseDTO.builder()
                         .status("error")
-                        .message("User not found with id: " + request.getEmployeeId())
+                        .code("EMP_NOT_FOUND")
+                        .message("Employee not found with id: " + request.getEmployeeId())
                         .build());
             }
             Authentication auth = authenticationManager.authenticate(
@@ -53,7 +54,8 @@ public class AuthenticationService {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
                     ResponseDTO.builder()
                             .status("error")
-                            .message("Login failed, invalid username or password")
+                            .code("EMP_INVALID_PASS")
+                            .message("Login failed, invalid password")
                             .build()
             );
         }
