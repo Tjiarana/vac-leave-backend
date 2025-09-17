@@ -15,6 +15,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -27,8 +30,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/auth/**",
@@ -53,5 +56,46 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
+    }
+
+    @Bean
+    public UrlBasedCorsConfigurationSource corsConfigurationSource() {
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowCredentials(true);
+
+        // Allow specific origins
+        // config.addAllowedOrigin("*");
+//        config.addAllowedOriginPattern("https://*.azurewebsites.net");
+//        config.addAllowedOriginPattern("https://*.netlify.app");
+//        config.addAllowedOriginPattern("https://*.vercel.app");
+//        config.addAllowedOriginPattern("https://*.herokuapp.com");
+//        config.addAllowedOriginPattern("https://*.firebaseapp.com");
+//        config.addAllowedOriginPattern("https://*.github.io");
+//        config.addAllowedOriginPattern("https://*.gitlab.io");
+//        config.addAllowedOriginPattern("https://*.onrender.com");
+//        config.addAllowedOriginPattern("https://*.surge.sh");
+        config.addAllowedOrigin("http://localhost:8080");
+        config.addAllowedOrigin("http://localhost:4200");
+        config.addAllowedOrigin("http://localhost:3000");
+        config.addAllowedOrigin("http://localhost:5173");
+        config.addAllowedOrigin("http://localhost:5000");
+        config.addAllowedOrigin("http://localhost:5001");
+
+        // Allow all headers and methods
+        config.addAllowedHeader("*");
+        config.addAllowedMethod("*");
+
+        // If you want specific headers or methods, uncomment below
+        // config.addAllowedHeader("Content-Type");
+        // config.addAllowedHeader("Authorization");
+        // config.addAllowedMethod("GET");
+        // config.addAllowedMethod("POST");
+        // config.addAllowedMethod("PUT");
+        // config.addAllowedMethod("DELETE");
+        // config.addAllowedMethod("OPTIONS");
+
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 }
