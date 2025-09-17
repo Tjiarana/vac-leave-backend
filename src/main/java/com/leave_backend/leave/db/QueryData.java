@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.leave_backend.leave.models.Employee;
 import com.leave_backend.leave.models.Gender;
-import com.leave_backend.leave.models.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -44,6 +43,48 @@ public class QueryData {
         });
     }
 
+    public List<ObjectNode> queryAllEmployeeDTO() {
+        String sql = """
+                SELECT e.employee_id, e.employee_firstname, e.employee_lastname, e.report_to, p.position_name
+                FROM employees as e
+                JOIN positions as p on e.position_id = p.position_id
+                """;
+        return namedParameterJdbcTemplate.query(sql, rs -> {
+            List<ObjectNode> employeeListDTO = new ArrayList<>();
+            while (rs.next()) {
+                ObjectNode employeeNode = mapper.createObjectNode()
+                        .put("id", rs.getString("employee_id"))
+                        .put("employeeName", rs.getString("employee_firstname") + " " + rs.getString("employee_lastname"))
+                        .put("reportTo", rs.getString("report_to"))
+                        .put("position", rs.getString("position_name"));
+                employeeListDTO.add(employeeNode);
+            }
+            return employeeListDTO;
+        });
+    }
+
+    public List<ObjectNode> queryAllEmployeeDTO(String employeeId) {
+        String sql = """
+                SELECT e.employee_id, e.employee_firstname, e.employee_lastname, e.report_to, p.position_name
+                FROM employees as e
+                JOIN positions as p on e.position_id = p.position_id
+                where e.report_to = :employee_id
+                """;
+        MapSqlParameterSource parameters = new MapSqlParameterSource().addValue("employee_id", employeeId);
+        return namedParameterJdbcTemplate.query(sql, parameters, rs -> {
+            List<ObjectNode> employeeListDTO = new ArrayList<>();
+            while (rs.next()) {
+                ObjectNode employeeNode = mapper.createObjectNode()
+                        .put("id", rs.getString("employee_id"))
+                        .put("employeeName", rs.getString("employee_firstname") + " " + rs.getString("employee_lastname"))
+                        .put("reportTo", rs.getString("report_to"))
+                        .put("position", rs.getString("position_name"));
+                employeeListDTO.add(employeeNode);
+            }
+            return employeeListDTO;
+        });
+    }
+
     public Employee queryEmployee(String id) {
         String sql = """
                 SELECT employee_id, employee_firstname, employee_lastname, employee_gender, employee_email, employee_phone, report_to, position_id
@@ -72,19 +113,20 @@ public class QueryData {
 
     public ObjectNode queryEmployeeDTO(String id) {
         String sql = """
-                SELECT employee_id, employee_firstname, employee_lastname, report_to, position_id
-                FROM employees
-                WHERE employee_id = :employee_id
+                SELECT e.employee_id, e.employee_firstname, e.employee_lastname, e.report_to, p.position_name
+                FROM employees as e
+                JOIN positions as p on e.position_id = p.position_id
+                WHERE e.employee_id = :employee_id
                 """;
         SqlParameterSource parameters = new MapSqlParameterSource()
                 .addValue("employee_id", id);
         return namedParameterJdbcTemplate.query(sql, parameters, rs -> {
             if (rs.next()) {
                 return mapper.createObjectNode()
-                        .put("employeeId", rs.getLong("employee_id"))
+                        .put("id", rs.getLong("employee_id"))
                         .put("employeeName", rs.getString("employee_firstname") + " " + rs.getString("employee_lastname"))
                         .put("reportTo", rs.getString("report_to"))
-                        .put("positionId", rs.getString("position_id"));
+                        .put("position", rs.getString("position_name"));
             } else {
                 return null;
             }

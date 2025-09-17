@@ -47,6 +47,62 @@ public class EmployeeService {
         }
     }
 
+    public ResponseEntity<Object> getAllEmployeeDTO() {
+        List<ObjectNode> queryResult = queryData.queryAllEmployeeDTO();
+        if (queryResult.isEmpty()) {
+            return ResponseEntity.ok(ResponseDTO.builder()
+                    .status("success")
+                    .message("Employees are empty")
+                    .build());
+        } else {
+            for (ObjectNode employeeNode : queryResult) {
+                if (employeeNode.hasNonNull("reportTo")) {
+                    JsonNode managerId = employeeNode.get("reportTo");
+                    Employee reportToQueryResult = queryData.queryEmployee(managerId.asText());
+                    ObjectNode managerNode = mapper.createObjectNode();
+                    managerNode.put("name", reportToQueryResult.getEmployeeFirstname() + " " + reportToQueryResult.getEmployeeLastname());
+                    managerNode.put("position", queryData.queryPosition(reportToQueryResult.getPositionId()));
+                    employeeNode.set("reportTo", managerNode);
+                } else {
+                    employeeNode.remove("reportTo");
+                }
+            }
+            return ResponseEntity.ok(ResponseDTO.builder()
+                    .status("success")
+                    .message("Retrieve all employee successfully")
+                    .data(queryResult)
+                    .build());
+        }
+    }
+
+    public ResponseEntity<Object> getAllEmployeeDTO(String employeeId) {
+        List<ObjectNode> queryResult = queryData.queryAllEmployeeDTO(employeeId);
+        if (queryResult.isEmpty()) {
+            return ResponseEntity.ok(ResponseDTO.builder()
+                    .status("success")
+                    .message("Employees are empty")
+                    .build());
+        } else {
+            for (ObjectNode employeeNode : queryResult) {
+                if (employeeNode.hasNonNull("reportTo")) {
+                    JsonNode managerId = employeeNode.get("reportTo");
+                    Employee reportToQueryResult = queryData.queryEmployee(managerId.asText());
+                    ObjectNode managerNode = mapper.createObjectNode();
+                    managerNode.put("name", reportToQueryResult.getEmployeeFirstname() + " " + reportToQueryResult.getEmployeeLastname());
+                    managerNode.put("position", queryData.queryPosition(reportToQueryResult.getPositionId()));
+                    employeeNode.set("reportTo", managerNode);
+                } else {
+                    employeeNode.remove("reportTo");
+                }
+            }
+            return ResponseEntity.ok(ResponseDTO.builder()
+                    .status("success")
+                    .message("Retrieve all employee successfully")
+                    .data(queryResult)
+                    .build());
+        }
+    }
+
     public ResponseEntity<Object> getEmployeeById(String id) {
         Employee queryResult = queryData.queryEmployee(id);
         if (queryResult == null) {
@@ -81,11 +137,6 @@ public class EmployeeService {
         } else {
             queryResult.remove("reportTo");
         }
-
-        JsonNode positionId = queryResult.get("positionId");
-        String positionName = queryData.queryPosition(positionId.asText());
-        queryResult.remove("positionId");
-        queryResult.put("position", positionName);
         return ResponseEntity.ok(ResponseDTO.builder()
                 .status("success")
                 .message("Retrieve employee id: " + id + " successfully")
