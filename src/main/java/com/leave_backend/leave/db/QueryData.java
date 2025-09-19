@@ -233,6 +233,23 @@ public class QueryData {
         });
     }
 
+    public List<String> queryRolesNameByUserId(String userId) {
+        String sql = """
+                SELECT r.role_name FROM user_roles as ur
+                JOIN roles as r on ur.role_id = r.role_id
+                where ur.user_id = :user_id
+                """;
+        SqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("user_id", userId);
+        return namedParameterJdbcTemplate.query(sql, parameters, rs -> {
+            List<String> rolesName = new ArrayList<>();
+            while (rs.next()) {
+                rolesName.add(rs.getString("role_name"));
+            }
+            return rolesName;
+        });
+    }
+
     public String queryUserIdByEmployeeId(String employeeId) {
         String sql = """
                 SELECT user_id

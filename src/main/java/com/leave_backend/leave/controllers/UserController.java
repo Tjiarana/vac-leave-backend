@@ -1,6 +1,7 @@
 package com.leave_backend.leave.controllers;
 
 import com.leave_backend.leave.models.User;
+import com.leave_backend.leave.models.UserRequestModel;
 import com.leave_backend.leave.services.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,8 +18,13 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
-    public ResponseEntity<Object> insertUser(@Valid @RequestBody User user) {
+    public ResponseEntity<Object> insertUser(@Valid @RequestBody UserRequestModel user) {
         return userService.insertUser(user);
+    }
+
+    @PutMapping(consumes = {MediaType.APPLICATION_JSON_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<Object> updateUser(@Valid @RequestBody UserRequestModel user) {
+        return userService.updateUser(user);
     }
 
     @DeleteMapping(produces = {MediaType.APPLICATION_JSON_VALUE})

@@ -29,4 +29,16 @@ public class UpdateData {
         log.info("Updated Employee affected [{}] row.", affectedRow);
         return affectedRow;
     }
+
+    public int updateUser(Map<String, Object> userInfo) {
+        String sql = """
+                UPDATE users
+                SET user_password = :user_password, employee_enabled = :employee_enabled
+                WHERE employee_id = :employee_id
+                """;
+        MapSqlParameterSource parameters = new MapSqlParameterSource(userInfo);
+        int affectedRow = namedParameterJdbcTemplate.update(sql, parameters);
+        log.info("Updated User affected [{}] row.", affectedRow);
+        return affectedRow;
+    }
 }
