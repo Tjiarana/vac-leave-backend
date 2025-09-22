@@ -29,6 +29,9 @@ public class EmployeeController {
     @GetMapping(produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<Object> getAllEmployee() { return employeeService.getAllEmployee(); }
 
+    @GetMapping(value = "/{id}", produces = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<Object> getEmployeeById(@PathVariable String id) { return employeeService.getEmployeeById(id); }
+
     @GetMapping(value = "/dto", produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<Object> getAllEmployeeDTO() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -41,6 +44,11 @@ public class EmployeeController {
             return employeeService.getAllEmployeeDTO();
         }
         return employeeService.getAllEmployeeDTO(employeeId);
+    }
+
+    @GetMapping(value = "/role/manager", produces = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<Object> getAllManager() {
+        return employeeService.getAllManager();
     }
 
     @GetMapping(value = "/dto/{id}",

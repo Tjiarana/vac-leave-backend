@@ -2,6 +2,7 @@ package com.leave_backend.leave.controllers;
 
 import com.leave_backend.leave.models.User;
 import com.leave_backend.leave.models.UserRequestModel;
+import com.leave_backend.leave.services.RoleService;
 import com.leave_backend.leave.services.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 public class UserController {
     private final UserService userService;
+    private final RoleService roleService;
 
     @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<Object> insertUser(@Valid @RequestBody UserRequestModel user) {
@@ -27,6 +29,11 @@ public class UserController {
         return userService.updateUser(user);
     }
 
-    @DeleteMapping(produces = {MediaType.APPLICATION_JSON_VALUE})
-    public ResponseEntity<Object> deleteUser(String employeeId) { return userService.deleteUser(employeeId); }
+    @DeleteMapping(value = "/{employeeId}", produces = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<Object> deleteUser(@PathVariable String employeeId) { return userService.deleteUser(employeeId); }
+
+    @GetMapping(value = "/{employeeId}/role", produces = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<Object> getUserRolesByEmployeeId(@PathVariable String employeeId) {
+        return roleService.getUserRolesByEmployeeId(employeeId);
+    }
 }

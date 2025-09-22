@@ -8,12 +8,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.leave_backend.leave.db.InsertData;
 import com.leave_backend.leave.db.QueryData;
 import com.leave_backend.leave.db.UpdateData;
-import com.leave_backend.leave.dto.ResponseDTO;
 import com.leave_backend.leave.models.Employee;
 import com.leave_backend.leave.utils.ResponseMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -53,10 +51,7 @@ public class EmployeeService {
        for (ObjectNode employeeNode : queryResult) {
            if (employeeNode.hasNonNull("reportTo")) {
                JsonNode managerId = employeeNode.get("reportTo");
-               Employee reportToQueryResult = queryData.queryEmployee(managerId.asText());
-               ObjectNode managerNode = mapper.createObjectNode();
-               managerNode.put("name", reportToQueryResult.getEmployeeFirstname() + " " + reportToQueryResult.getEmployeeLastname());
-               managerNode.put("position", queryData.queryPosition(reportToQueryResult.getPositionId()));
+               ObjectNode managerNode = queryData.queryEmployeeDTO(managerId.asText());
                employeeNode.set("reportTo", managerNode);
            } else {
                employeeNode.remove("reportTo");
@@ -76,62 +71,56 @@ public class EmployeeService {
             for (ObjectNode employeeNode : queryResult) {
                 if (employeeNode.hasNonNull("reportTo")) {
                     JsonNode managerId = employeeNode.get("reportTo");
-                    Employee reportToQueryResult = queryData.queryEmployee(managerId.asText());
-                    ObjectNode managerNode = mapper.createObjectNode();
-                    managerNode.put("name", reportToQueryResult.getEmployeeFirstname() + " " + reportToQueryResult.getEmployeeLastname());
-                    managerNode.put("position", queryData.queryPosition(reportToQueryResult.getPositionId()));
+                    ObjectNode managerNode = queryData.queryEmployeeDTO(managerId.asText());
                     employeeNode.set("reportTo", managerNode);
                 } else {
                     employeeNode.remove("reportTo");
                 }
             }
-            return ResponseEntity.ok(ResponseDTO.builder()
-                    .status("success")
-                    .message("Retrieve all employee successfully")
-                    .data(queryResult)
-                    .build());
+            ObjectNode responseData = mapper.createObjectNode();
+            ArrayNode arrayNode = responseData.putArray("data");
+            arrayNode.addAll((ArrayNode) mapper.valueToTree(queryResult));
+            return ResponseMessage.generateResponseEntity(200, "Retrieve all employee successfully", responseData);
         }
     }
 
+    public ResponseEntity<Object> getAllManager() {
+        List<ObjectNode> queryResult = queryData.queryAllManager();
+        if (queryResult.isEmpty()) {
+            return ResponseMessage.generateResponseEntity(200, "Managers are empty");
+        }
+        ObjectNode responseData = mapper.createObjectNode();
+        ArrayNode arrayNode = responseData.putArray("data");
+        arrayNode.addAll((ArrayNode) mapper.valueToTree(queryResult));
+        return ResponseMessage.generateResponseEntity(200, "Retrieve all managers successfully", responseData);
+    }
+
     public ResponseEntity<Object> getEmployeeById(String id) {
-        Employee queryResult = queryData.queryEmployee(id);
+        ObjectNode queryResult = queryData.queryEmployee(id);
         if (queryResult == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseDTO.builder()
-                    .status("error")
-                    .message("Employees not found with id: " + id)
-                    .build());
+            return ResponseMessage.generateResponseEntity(404, "EMP_NOT_FOUND", "Employees not found with id: " + id);
         } else {
-            return ResponseEntity.ok(ResponseDTO.builder()
-                    .status("success")
-                    .message("Retrieve employee id: " + id + " successfully")
-                    .data(queryResult)
-                    .build());
+            ObjectNode responseData = mapper.createObjectNode();
+            responseData.set("data", queryResult);
+            return ResponseMessage.generateResponseEntity(200, "Retrieve employee id: " + id + " successfully", responseData);
         }
     }
 
     public ResponseEntity<Object> getEmployeeDTOById(String id) {
         ObjectNode queryResult = queryData.queryEmployeeDTO(id);
         if (queryResult == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseDTO.builder()
-                    .status("error")
-                    .message("Employees not found with id: " + id)
-                    .build());
+            return ResponseMessage.generateResponseEntity(404, "EMP_NOT_FOUND", "Employees not found with id: " + id);
         }
         if (queryResult.hasNonNull("reportTo")) {
             JsonNode managerId = queryResult.get("reportTo");
-            Employee reportToQueryResult = queryData.queryEmployee(managerId.asText());
-            ObjectNode managerNode = mapper.createObjectNode();
-            managerNode.put("name", reportToQueryResult.getEmployeeFirstname() + " " + reportToQueryResult.getEmployeeLastname());
-            managerNode.put("position", queryData.queryPosition(reportToQueryResult.getPositionId()));
+            ObjectNode managerNode = queryData.queryEmployeeDTO(managerId.asText());
             queryResult.set("reportTo", managerNode);
         } else {
             queryResult.remove("reportTo");
         }
-        return ResponseEntity.ok(ResponseDTO.builder()
-                .status("success")
-                .message("Retrieve employee id: " + id + " successfully")
-                .data(queryResult)
-                .build());
+        ObjectNode responseData = mapper.createObjectNode();
+        responseData.set("data", queryResult);
+        return ResponseMessage.generateResponseEntity(200, "Retrieve employee id: " + id + " successfully", responseData);
     }
 
     @Transactional
@@ -139,36 +128,21 @@ public class EmployeeService {
         List<String> existingEmployeeId = queryData.queryAllEmployee().stream().map(Employee::getId).toList();
         Map<String, List<String>> existingEmployeeFields = queryData.queryExistingEmployeeField(employee.getEmployeeEmail(), employee.getEmployeePhone());
         if (queryData.queryExistingEmployee(employee.getId())) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(ResponseDTO.builder()
-                    .status("error")
-                    .message("Employee id: " + employee.getId() + " already exist")
-                    .build());
+            return ResponseMessage.generateResponseEntity(409, "EMP_EXIST", "Employee id: " + employee.getId() + " already exist");
         }
         if (existingEmployeeFields != null) {
             if (existingEmployeeFields.get("emails").contains(employee.getEmployeeEmail())) {
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(ResponseDTO.builder()
-                        .status("error")
-                        .message("Email: " + employee.getEmployeeEmail() + " already exist")
-                        .build());
+                return ResponseMessage.generateResponseEntity(409, "EMP_EXIST_EMAIL", "Email: " + employee.getEmployeeEmail() + " already exist");
             }
             if (existingEmployeeFields.get("phones").contains(employee.getEmployeePhone())) {
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(ResponseDTO.builder()
-                        .status("error")
-                        .message("Phone number: " + employee.getEmployeePhone() + " already exist")
-                        .build());
+                return ResponseMessage.generateResponseEntity(409, "EMP_EXIST_PHONE", "Phone number: " + employee.getEmployeePhone() + " already exist");
             }
         }
         if (employee.getReportTo() != null && !existingEmployeeId.contains(employee.getReportTo()) || employee.getId().equals(employee.getReportTo())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ResponseDTO.builder()
-                    .status("error")
-                    .message("Invalid report to: " + employee.getReportTo())
-                    .build());
+            return ResponseMessage.generateResponseEntity(400, "INVALID_EMP_ID", "Invalid report to: " + employee.getReportTo());
         }
         if (queryData.queryExistingPosition(employee.getPositionId()) == false) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ResponseDTO.builder()
-                    .status("error")
-                    .message("Invalid position id: " + employee.getPositionId())
-                    .build());
+            return ResponseMessage.generateResponseEntity(400, "INVALID_POSITION_ID", "Invalid position id: " + employee.getPositionId());
         }
         HashMap<String, Object> employeeInfo = new HashMap<>();
         employeeInfo.put("employee_id", employee.getId());
@@ -181,15 +155,9 @@ public class EmployeeService {
         employeeInfo.put("position_id", employee.getPositionId());
         int insertResult = insertData.insertEmployee(employeeInfo);
         if (insertResult == 1) {
-            return ResponseEntity.ok(ResponseDTO.builder()
-                    .status("success")
-                    .message("Insert employee successfully")
-                    .build());
+            return ResponseMessage.generateResponseEntity(200, "Insert employee successfully");
         } else {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ResponseDTO.builder()
-                    .status("error")
-                    .message("Cannot insert employee")
-                    .build());
+            return ResponseMessage.generateResponseEntity(500, "IN_ERR", "Cannot insert employee");
         }
     }
 
@@ -198,36 +166,21 @@ public class EmployeeService {
         List<String> existingEmployeeId = queryData.queryAllEmployee().stream().map(Employee::getId).toList();
         Map<String, List<String>> existingOtherEmployeeFields = queryData.queryExistingOtherEmployeeField(employee.getId(), employee.getEmployeeEmail(), employee.getEmployeePhone());
         if (!existingEmployeeId.contains(employee.getId())) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseDTO.builder()
-                    .status("error")
-                    .message("Employee id: " + employee.getId() + " not found")
-                    .build());
+            return ResponseMessage.generateResponseEntity(404, "Employee id: " + employee.getId() + " not found");
         }
         if (existingOtherEmployeeFields != null) {
             if (existingOtherEmployeeFields.get("emails").contains(employee.getEmployeeEmail())) {
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(ResponseDTO.builder()
-                        .status("error")
-                        .message("Email: " + employee.getEmployeeEmail() + " already exist")
-                        .build());
+                return ResponseMessage.generateResponseEntity(409, "EMP_EXIST_EMAIL", "Email: " + employee.getEmployeeEmail() + " already exist");
             }
             if (existingOtherEmployeeFields.get("phones").contains(employee.getEmployeePhone())) {
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(ResponseDTO.builder()
-                        .status("error")
-                        .message("Phone number: " + employee.getEmployeePhone() + " already exist")
-                        .build());
+                return ResponseMessage.generateResponseEntity(409, "EMP_EXIST_PHONE", "Phone number: " + employee.getEmployeePhone() + " already exist");
             }
         }
         if (employee.getReportTo() != null && !existingEmployeeId.contains(employee.getReportTo()) || employee.getId().equals(employee.getReportTo())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ResponseDTO.builder()
-                    .status("error")
-                    .message("Invalid report to: " + employee.getReportTo())
-                    .build());
+            return ResponseMessage.generateResponseEntity(400, "INVALID_EMP_ID", "Invalid report to: " + employee.getReportTo());
         }
         if (queryData.queryExistingPosition(employee.getPositionId()) == false) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ResponseDTO.builder()
-                    .status("error")
-                    .message("Invalid position id: " + employee.getPositionId())
-                    .build());
+            return ResponseMessage.generateResponseEntity(400, "INVALID_POSITION_ID", "Invalid position id: " + employee.getPositionId());
         }
         Map<String, Object> employeeInfo = new HashMap<>();
         employeeInfo.put("employee_firstname", employee.getEmployeeFirstname());
@@ -239,15 +192,9 @@ public class EmployeeService {
         employeeInfo.put("position_id", employee.getPositionId());
         int updatedResult = updateData.updateEmployee(employee.getId(), employeeInfo);
         if (updatedResult == 1) {
-            return ResponseEntity.ok(ResponseDTO.builder()
-                    .status("success")
-                    .message("Update employee successfully")
-                    .build());
+            return ResponseMessage.generateResponseEntity(200, "Update employee successfully");
         } else {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ResponseDTO.builder()
-                    .status("error")
-                    .message("Cannot update employee")
-                    .build());
+            return ResponseMessage.generateResponseEntity(500, "IN_ERR", "Cannot update employee");
         }
     }
 }

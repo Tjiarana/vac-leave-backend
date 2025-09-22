@@ -1,8 +1,7 @@
-package com.leave_backend.leave.dto.employee;
+package com.leave_backend.leave.dto;
 
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.leave_backend.leave.models.Position;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

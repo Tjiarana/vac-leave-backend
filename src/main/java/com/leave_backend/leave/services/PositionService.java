@@ -1,10 +1,18 @@
 package com.leave_backend.leave.services;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.leave_backend.leave.db.QueryData;
 import com.leave_backend.leave.models.Position;
+import com.leave_backend.leave.utils.ResponseMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -20,24 +28,27 @@ import java.util.List;
 @RequiredArgsConstructor
 @Service
 public class PositionService {
-    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+    private final QueryData queryData;
+    private final ObjectMapper mapper = JsonMapper.builder().build();
 
-    public List<Position> getAll() {
-        String sql = "SELECT position_id, position_name FROM positions";
-        return namedParameterJdbcTemplate.query(sql, (rs, rowNum) -> {
-            return new Position(rs.getString("position_id"), rs.getString("position_name"));
-        });
+    public ResponseEntity<Object> getAllPosition() {
+        List<ObjectNode> queryResult = queryData.queryAllPosition();
+        if (queryResult.isEmpty()) {
+            return ResponseMessage.generateResponseEntity(200, "Positions are empty");
+        }
+        ObjectNode responseData = mapper.createObjectNode();
+        ArrayNode arrayNode = responseData.putArray("data");
+        arrayNode.addAll((ArrayNode) mapper.valueToTree(queryResult));
+        return ResponseMessage.generateResponseEntity(200, "Retrieve all position successfully", responseData);
     }
 
-    public String getPositionById(String id) {
-        final String sql = """
-                SELECT position_name
-                FROM positions
-                WHERE position_id = :position_id
-                """;
-        MapSqlParameterSource parameters = new MapSqlParameterSource().addValue("position_id", id);
-        return namedParameterJdbcTemplate.query(sql, parameters, rs -> {
-            return rs.getString("position_name");
-        });
+    public ResponseEntity<Object> getPositionById(String id) {
+        ObjectNode queryResult = queryData.queryPositionById(id);
+        if (queryResult == null) {
+            return ResponseMessage.generateResponseEntity(400, "INV_ID", "Invalid position id");
+        }
+        ObjectNode responseData = mapper.createObjectNode();
+        responseData.set("data", queryResult);
+        return ResponseMessage.generateResponseEntity(200, "Retrieve position successfully", responseData);
     }
 }

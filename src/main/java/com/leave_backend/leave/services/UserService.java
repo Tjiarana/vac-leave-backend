@@ -8,6 +8,7 @@ import com.leave_backend.leave.dto.ResponseDTO;
 import com.leave_backend.leave.models.Employee;
 import com.leave_backend.leave.models.User;
 import com.leave_backend.leave.models.UserRequestModel;
+import com.leave_backend.leave.utils.ResponseMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -36,17 +37,11 @@ public class UserService {
     public ResponseEntity<Object> insertUser(UserRequestModel user) {
         boolean isUserAlreadyExist = queryData.queryUserIdByEmployeeId(user.getEmployeeId()) != null;
         if (isUserAlreadyExist) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(ResponseDTO.builder()
-                    .status("error")
-                    .message("User with employee id: " + user.getEmployeeId() + " already exist")
-                    .build());
+            return ResponseMessage.generateResponseEntity(409, "EMP_EXIST", "Employee id: " + user.getEmployeeId() + " already exist");
         }
         List<String> rolesId = queryData.queryRolesIdByRolesName(user.getRoles());
         if (rolesId == null || rolesId.size() != user.getRoles().size()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ResponseDTO.builder()
-                    .status("error")
-                    .message("Invalid role")
-                    .build());
+            return ResponseMessage.generateResponseEntity(400, "INVALID_ROLE", "Invalid role");
         }
         Employee employeeInfo = Employee.builder()
                 .id(user.getEmployeeId())
@@ -65,15 +60,9 @@ public class UserService {
         if (insertResult == 1) {
             String userId = queryData.queryUserIdByEmployeeId(user.getEmployeeId());
             insertData.insertUserRoles(userId, rolesId);
-            return ResponseEntity.ok(ResponseDTO.builder()
-                    .status("success")
-                    .message("Create user successfully")
-                    .build());
+            return ResponseMessage.generateResponseEntity(200, "Create user successfully");
         } else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ResponseDTO.builder()
-                    .status("error")
-                    .message("Cannot insert user")
-                    .build());
+            return ResponseMessage.generateResponseEntity(500, "IN_ERR", "Cannot insert user");
         }
     }
 
@@ -82,42 +71,24 @@ public class UserService {
         Map<String, List<String>> existingOtherEmployeeFields = queryData.queryExistingOtherEmployeeField(user.getEmployeeId(), user.getEmployeeEmail(), user.getEmployeePhone());
         List<String> rolesId = queryData.queryRolesIdByRolesName(user.getRoles());
         if (rolesId == null || rolesId.size() != user.getRoles().size()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ResponseDTO.builder()
-                    .status("error")
-                    .message("Invalid role")
-                    .build());
+            return ResponseMessage.generateResponseEntity(400, "INVALID_ROLE", "Invalid role");
         }
         if (!existingEmployeeId.contains(user.getEmployeeId())) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseDTO.builder()
-                    .status("error")
-                    .message("Employee id: " + user.getEmployeeId() + " not found")
-                    .build());
+            return ResponseMessage.generateResponseEntity(404, "EMP_NOT_FOUND", "Employees not found with id: " + user.getEmployeeId());
         }
         if (existingOtherEmployeeFields != null) {
             if (existingOtherEmployeeFields.get("emails").contains(user.getEmployeeEmail())) {
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(ResponseDTO.builder()
-                        .status("error")
-                        .message("Email: " + user.getEmployeeEmail() + " already exist")
-                        .build());
+                return ResponseMessage.generateResponseEntity(409, "EMP_EXIST_EMAIL", "Email: " + user.getEmployeeEmail() + " already exist");
             }
             if (existingOtherEmployeeFields.get("phones").contains(user.getEmployeePhone())) {
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(ResponseDTO.builder()
-                        .status("error")
-                        .message("Phone number: " + user.getEmployeePhone() + " already exist")
-                        .build());
+                return ResponseMessage.generateResponseEntity(409, "EMP_EXIST_PHONE", "Phone number: " + user.getEmployeePhone() + " already exist");
             }
         }
         if (user.getReportTo() != null && !existingEmployeeId.contains(user.getReportTo()) || user.getEmployeeId().equals(user.getReportTo())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ResponseDTO.builder()
-                    .status("error")
-                    .message("Invalid report to: " + user.getReportTo())
-                    .build());
+            return ResponseMessage.generateResponseEntity(400, "INVALID_EMP_ID", "Invalid report to: " + user.getReportTo());
         }
         if (queryData.queryExistingPosition(user.getPositionId()) == false) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ResponseDTO.builder()
-                    .status("error")
-                    .message("Invalid position id: " + user.getPositionId())
-                    .build());
+            return ResponseMessage.generateResponseEntity(400, "INVALID_POSITION_ID", "Invalid position id: " + user.getPositionId());
         }
         Employee employeeInfo = Employee.builder()
                 .id(user.getEmployeeId())
@@ -137,26 +108,17 @@ public class UserService {
         String userId = queryData.queryUserIdByEmployeeId(user.getEmployeeId());
         deleteData.deleteUserRoles(userId);
         insertData.insertUserRoles(userId, rolesId);
-        return ResponseEntity.ok(ResponseDTO.builder()
-                .status("success")
-                .message("Update user successfully")
-                .build());
+        return ResponseMessage.generateResponseEntity(200, "Update user successfully");
     }
 
     public ResponseEntity<Object> deleteUser(String employeeId) {
         String userId = queryData.queryUserIdByEmployeeId(employeeId);
         if (userId == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ResponseDTO.builder()
-                    .status("error")
-                    .message("User with employee id: " + employeeId + " not found")
-                    .build());
+            return ResponseMessage.generateResponseEntity(404, "EMP_NOT_FOUND", "User with employee id: " + employeeId + " not found");
         }
         deleteData.deleteUserRoles(userId);
         deleteData.deleteUser(userId);
         deleteData.deleteEmployee(employeeId);
-        return ResponseEntity.ok(ResponseDTO.builder()
-                .status("success")
-                .message("Delete user with employee id: " + employeeId + " successfully")
-                .build());
+        return ResponseMessage.generateResponseEntity(200, "Delete user with employee id: " + employeeId + " successfully");
     }
 }

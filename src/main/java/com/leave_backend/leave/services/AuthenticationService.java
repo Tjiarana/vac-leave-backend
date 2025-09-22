@@ -1,18 +1,15 @@
 package com.leave_backend.leave.services;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.leave_backend.leave.db.QueryData;
-import com.leave_backend.leave.dto.ResponseDTO;
 import com.leave_backend.leave.models.LoginRequestModel;
 import com.leave_backend.leave.utils.JwtUtil;
 import com.leave_backend.leave.utils.ResponseMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;

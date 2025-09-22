@@ -85,7 +85,7 @@ public class QueryData {
         });
     }
 
-    public Employee queryEmployee(String id) {
+    public ObjectNode queryEmployee(String id) {
         String sql = """
                 SELECT employee_id, employee_firstname, employee_lastname, employee_gender, employee_email, employee_phone, report_to, position_id
                 FROM employees
@@ -95,16 +95,15 @@ public class QueryData {
                 .addValue("employee_id", id);
         return namedParameterJdbcTemplate.query(sql, parameters, rs -> {
             if (rs.next()) {
-                Employee employee = new Employee();
-                employee.setId(rs.getString("employee_id"));
-                employee.setEmployeeFirstname(rs.getString("employee_firstname"));
-                employee.setEmployeeLastname(rs.getString("employee_lastname"));
-                employee.setEmployeeGender(Gender.valueOf(rs.getString("employee_gender")));
-                employee.setEmployeeEmail(rs.getString("employee_email"));
-                employee.setEmployeePhone(rs.getString("employee_phone"));
-                employee.setReportTo(rs.getString("report_to"));
-                employee.setPositionId(rs.getString("position_id"));
-                return employee;
+                return mapper.createObjectNode()
+                        .put("id", rs.getString("employee_id"))
+                        .put("employeeFirstname", rs.getString("employee_firstname"))
+                        .put("employeeLastname", rs.getString("employee_lastname"))
+                        .put("employeeGender", rs.getString("employee_gender"))
+                        .put("employeeEmail", rs.getString("employee_email"))
+                        .put("employeePhone", rs.getString("employee_phone"))
+                        .put("reportTo", rs.getString("report_to"))
+                        .put("positionId", rs.getString("position_id"));
             } else {
                 return null;
             }
@@ -130,6 +129,27 @@ public class QueryData {
             } else {
                 return null;
             }
+        });
+    }
+
+    public List<ObjectNode> queryAllManager() {
+        String sql = """
+                SELECT e.employee_id as manager_id, concat(e.employee_firstname, ' ', e.employee_lastname) as manager_name
+                FROM employees as e
+                JOIN users as u on e.employee_id = u.employee_id
+                JOIN user_roles ur on u.user_id = ur.user_id
+                JOIN roles r on ur.role_id = r.role_id
+                WHERE r.role_name = 'MANAGER'
+                """;
+        return namedParameterJdbcTemplate.query(sql, rs -> {
+            List<ObjectNode> managerList = new ArrayList<>();
+            while(rs.next()) {
+                ObjectNode managerNode = mapper.createObjectNode()
+                        .put("managerId", rs.getString("manager_id"))
+                        .put("managerName", rs.getString("manager_name"));
+                managerList.add(managerNode);
+            }
+            return managerList;
         });
     }
 
@@ -189,9 +209,26 @@ public class QueryData {
         });
     }
 
-    public String queryPosition(String id) {
+    public List<ObjectNode> queryAllPosition() {
         String sql = """
-                SELECT position_name
+                SELECT position_id, position_name
+                FROM positions
+                """;
+        return namedParameterJdbcTemplate.query(sql, rs -> {
+            List<ObjectNode> positionListNode = new ArrayList<>();
+            while (rs.next()) {
+                ObjectNode positionNode = mapper.createObjectNode()
+                    .put("positionId", rs.getString("position_id"))
+                    .put("positionName", rs.getString("position_name"));
+                positionListNode.add(positionNode);
+            }
+            return positionListNode;
+        });
+    }
+
+    public ObjectNode queryPositionById(String id) {
+        String sql = """
+                SELECT position_id, position_name
                 FROM positions
                 WHERE position_id = :position_id
                 """;
@@ -199,7 +236,9 @@ public class QueryData {
                 .addValue("position_id", id);
         return namedParameterJdbcTemplate.query(sql, parameters, rs -> {
             if (rs.next()) {
-                return rs.getString("position_name");
+                return mapper.createObjectNode()
+                        .put("positionId", rs.getString("position_id"))
+                        .put("positionName", rs.getString("position_name"));
             } else {
                 return null;
             }
@@ -233,14 +272,15 @@ public class QueryData {
         });
     }
 
-    public List<String> queryRolesNameByUserId(String userId) {
+    public List<String> queryRolesByEmployeeId(String employeeId) {
         String sql = """
-                SELECT r.role_name FROM user_roles as ur
+                SELECT r.role_name FROM users u
+                JOIN user_roles as ur on u.user_id = ur.user_id
                 JOIN roles as r on ur.role_id = r.role_id
-                where ur.user_id = :user_id
+                where u.employee_id = :employee_id
                 """;
         SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("user_id", userId);
+                .addValue("employee_id", employeeId);
         return namedParameterJdbcTemplate.query(sql, parameters, rs -> {
             List<String> rolesName = new ArrayList<>();
             while (rs.next()) {
