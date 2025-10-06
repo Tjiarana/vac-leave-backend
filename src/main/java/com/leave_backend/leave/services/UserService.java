@@ -118,6 +118,7 @@ public class UserService {
         }
         deleteData.deleteUserRoles(userId);
         deleteData.deleteUser(userId);
+        updateData.clearReportTo(employeeId);
         deleteData.deleteEmployee(employeeId);
         return ResponseMessage.generateResponseEntity(200, "Delete user with employee id: " + employeeId + " successfully");
     }

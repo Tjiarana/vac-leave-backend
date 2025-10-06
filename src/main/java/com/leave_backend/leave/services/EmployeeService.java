@@ -84,17 +84,6 @@ public class EmployeeService {
         }
     }
 
-    public ResponseEntity<Object> getAllManager() {
-        List<ObjectNode> queryResult = queryData.queryAllManager();
-        if (queryResult.isEmpty()) {
-            return ResponseMessage.generateResponseEntity(200, "Managers are empty");
-        }
-        ObjectNode responseData = mapper.createObjectNode();
-        ArrayNode arrayNode = responseData.putArray("data");
-        arrayNode.addAll((ArrayNode) mapper.valueToTree(queryResult));
-        return ResponseMessage.generateResponseEntity(200, "Retrieve all managers successfully", responseData);
-    }
-
     public ResponseEntity<Object> getEmployeeById(String id) {
         ObjectNode queryResult = queryData.queryEmployee(id);
         if (queryResult == null) {

@@ -46,11 +46,6 @@ public class EmployeeController {
         return employeeService.getAllEmployeeDTO(employeeId);
     }
 
-    @GetMapping(value = "/role/manager", produces = {MediaType.APPLICATION_JSON_VALUE})
-    public ResponseEntity<Object> getAllManager() {
-        return employeeService.getAllManager();
-    }
-
     @GetMapping(value = "/dto/{id}",
             produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<Object> getEmployeeDTOById(@PathVariable String id) {

@@ -153,6 +153,30 @@ public class QueryData {
         });
     }
 
+    public List<ObjectNode> queryOtherManager(String exceptId) {
+        String sql = """
+                SELECT e.employee_id as manager_id, concat(e.employee_firstname, ' ', e.employee_lastname) as manager_name
+                FROM employees as e
+                JOIN users as u on e.employee_id = u.employee_id
+                JOIN user_roles ur on u.user_id = ur.user_id
+                JOIN roles r on ur.role_id = r.role_id
+                WHERE r.role_name = 'MANAGER'
+                AND e.employee_id != :employee_id
+                AND (e.report_to IS NULL OR e.report_to != :employee_id)
+                """;
+        MapSqlParameterSource parameters = new MapSqlParameterSource().addValue("employee_id", exceptId);
+        return namedParameterJdbcTemplate.query(sql, parameters, rs -> {
+            List<ObjectNode> managerList = new ArrayList<>();
+            while(rs.next()) {
+                ObjectNode managerNode = mapper.createObjectNode()
+                        .put("managerId", rs.getString("manager_id"))
+                        .put("managerName", rs.getString("manager_name"));
+                managerList.add(managerNode);
+            }
+            return managerList;
+        });
+    }
+
     public Boolean queryExistingEmployee(String employeeId) {
         String sql = """
                 SELECT 1 FROM employees

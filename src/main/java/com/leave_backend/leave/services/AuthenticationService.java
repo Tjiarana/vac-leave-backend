@@ -31,6 +31,7 @@ public class AuthenticationService {
     private final QueryData queryData;
 
     public ResponseEntity<Object> login(LoginRequestModel request) {
+        log.debug("request : {}", request);
         try {
             if (queryData.queryUserIdByEmployeeId(request.getEmployeeId()) == null) {
                 return ResponseMessage.generateResponseEntity(400, "EMP_NOT_FOUND", "Employee not found with id: " + request.getEmployeeId());

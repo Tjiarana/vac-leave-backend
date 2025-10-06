@@ -41,4 +41,17 @@ public class UpdateData {
         log.info("Updated User affected [{}] row.", affectedRow);
         return affectedRow;
     }
+
+    public int clearReportTo(String employeeId) {
+        String sql = """
+                UPDATE employees
+                SET report_to = null
+                WHERE report_to = :employee_id
+                """;
+        MapSqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("employee_id", employeeId);
+        int affectedRow = namedParameterJdbcTemplate.update(sql, parameters);
+        log.info("Clear employee report to affected [{}] row.", affectedRow);
+        return affectedRow;
+    }
 }
